@@ -1,4 +1,4 @@
-package de.weptech.imv_scanner;
+package de.imvlandau.imv_scanner;
 
 import org.junit.Test;
 

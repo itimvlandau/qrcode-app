@@ -1,4 +1,4 @@
-package de.weptech.imv_scanner;
+package de.imvlandau.imv_scanner;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mCodeScanner = new CodeScanner(this, findViewById(R.id.scanner));
         mCodeScanner.setDecodeCallback(result -> runOnUiThread(() -> {
-            ScanResultDialog dialog = new ScanResultDialog(this, result);
+            de.imvlandau.imv_scanner.ScanResultDialog dialog = new de.imvlandau.imv_scanner.ScanResultDialog(this, result);
             dialog.setOnDismissListener(d -> mCodeScanner.startPreview());
             dialog.show();
         }));
@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == RC_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 mPermissionGranted = true;
