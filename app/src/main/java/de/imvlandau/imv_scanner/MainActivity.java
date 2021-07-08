@@ -10,22 +10,32 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.budiyev.android.codescanner.CodeScanner;
+import com.google.zxing.Result;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
     private static final int RC_PERMISSION = 10;
     private CodeScanner mCodeScanner;
     private boolean mPermissionGranted;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mCodeScanner = new CodeScanner(this, findViewById(R.id.scanner));
-        mCodeScanner.setDecodeCallback(result -> runOnUiThread(() -> {
-            de.imvlandau.imv_scanner.ScanResultDialog dialog = new de.imvlandau.imv_scanner.ScanResultDialog(this, result);
-            dialog.setOnDismissListener(d -> mCodeScanner.startPreview());
-            dialog.show();
-        }));
+        mCodeScanner.setDecodeCallback(result -> {
+            Status status = processResult(result);
+            runOnUiThread(() -> {
+                de.imvlandau.imv_scanner.ScanResultDialog dialog = new de.imvlandau.imv_scanner.ScanResultDialog(this, status);
+                dialog.setOnDismissListener(d -> mCodeScanner.startPreview());
+                dialog.show();
+            });
+        });
         mCodeScanner.setErrorCallback(error -> runOnUiThread(
                 () -> Toast.makeText(this, getString(R.string.scanner_error, error), Toast.LENGTH_LONG).show()));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -39,6 +49,22 @@ public class MainActivity extends AppCompatActivity {
             mPermissionGranted = true;
         }
     }
+
+    private Status processResult(Result result) {
+        int code = -1;
+        try {
+            URL url = new URL("https://imv-landau.de/api/attendees/validate/" + result.getText());
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.connect();
+            code = connection.getResponseCode(); // show code result :)
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Status.fromInteger(code);
+
+    }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
