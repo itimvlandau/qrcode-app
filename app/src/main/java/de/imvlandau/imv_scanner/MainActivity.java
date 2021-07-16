@@ -4,64 +4,89 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.budiyev.android.codescanner.CodeScanner;
-import com.google.zxing.Result;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
     private static final int RC_PERMISSION = 10;
     private CodeScanner mCodeScanner;
     private boolean mPermissionGranted;
-
+    private Button okButton;
+    private EditText codeEditText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mCodeScanner = new CodeScanner(this, findViewById(R.id.scanner));
-        mCodeScanner.setDecodeCallback(result -> {
-            Status status = processResult(result);
-            runOnUiThread(() -> {
-                de.imvlandau.imv_scanner.ScanResultDialog dialog = new de.imvlandau.imv_scanner.ScanResultDialog(this, status);
-                dialog.setOnDismissListener(d -> mCodeScanner.startPreview());
-                dialog.show();
-            });
+        okButton = findViewById(R.id.ok_button);
+        codeEditText = findViewById(R.id.code_edit_text);
+        okButton.setOnClickListener(v -> {
+            if (codeEditText.getText().length() > 5 || codeEditText.getText().length() < 4) {
+                Toast.makeText(MainActivity.this, "The Code is False", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            new Thread(() -> processResult(codeEditText.getText().toString())).start();
+
+            codeEditText.getText().clear();
+
         });
+        mCodeScanner = new CodeScanner(this, findViewById(R.id.scanner));
+        mCodeScanner.setDecodeCallback(result -> processResult(result.getText()));
         mCodeScanner.setErrorCallback(error -> runOnUiThread(
                 () -> Toast.makeText(this, getString(R.string.scanner_error, error), Toast.LENGTH_LONG).show()));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                mPermissionGranted = false;
-                requestPermissions(new String[]{Manifest.permission.CAMERA}, RC_PERMISSION);
-            } else {
-                mPermissionGranted = true;
-            }
+        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            mPermissionGranted = false;
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, RC_PERMISSION);
         } else {
             mPermissionGranted = true;
         }
     }
 
-    private Status processResult(Result result) {
+    private void processResult(String result) {
         int code = -1;
         try {
-            URL url = new URL("https://imv-landau.de/api/attendees/validate/" + result.getText());
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            URL url = new URL("https://imv-landau.de:8080/api/attendees/validate/" + result);
+
+            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.connect();
             code = connection.getResponseCode(); // show code result :)
+
+            // This snippet can read the response page ( accepted, im Used , etc..)
+            /*
+            InputStream inputStream = connection.getInputStream();
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+            String string = null;
+            while ((string = bufferedReader.readLine()) != null) {
+                System.out.println("Received " + string);
+            }
+
+            */
         } catch (IOException e) {
             e.printStackTrace();
+            runOnUiThread(() ->
+                    Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show());
         }
-        return Status.fromInteger(code);
+        final Status status = Status.fromInteger(code);
+
+        runOnUiThread(() -> {
+            de.imvlandau.imv_scanner.ScanResultDialog dialog = new de.imvlandau.imv_scanner.ScanResultDialog(this, status);
+            dialog.setOnDismissListener(d -> mCodeScanner.startPreview());
+            dialog.show();
+        });
 
     }
 
