@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private void processResult(String result) {
         int code = -1;
         try {
-            URL url = new URL("https://imv-landau.de:8080/api/attendees/validate/" + result);
+            URL url = new URL("https://imv-landau.de/api/participant/validate/" + result);
 
             HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
