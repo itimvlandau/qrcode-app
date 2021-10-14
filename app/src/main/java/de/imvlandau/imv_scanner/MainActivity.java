@@ -2,7 +2,6 @@ package de.imvlandau.imv_scanner;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,9 +13,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.budiyev.android.codescanner.CodeScanner;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 
-import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
     private static final int RC_PERMISSION = 10;
@@ -32,11 +31,12 @@ public class MainActivity extends AppCompatActivity {
         okButton = findViewById(R.id.ok_button);
         codeEditText = findViewById(R.id.code_edit_text);
         okButton.setOnClickListener(v -> {
-            if (codeEditText.getText().length() > 5 || codeEditText.getText().length() < 4) {
+            final String code = codeEditText.getText().toString();
+            if (code.length() > 5 || code.length() < 4) {
                 Toast.makeText(MainActivity.this, "The Code is False", Toast.LENGTH_SHORT).show();
                 return;
             }
-            new Thread(() -> processResult(codeEditText.getText().toString())).start();
+            new Thread(() -> processResult(code)).start();
 
             codeEditText.getText().clear();
 
@@ -56,9 +56,9 @@ public class MainActivity extends AppCompatActivity {
     private void processResult(String result) {
         int code = -1;
         try {
-            URL url = new URL("https://imv-landau.de/api/participant/validate/" + result);
+            URL url = new URL("http://imv-landau.de/api/participant/validate/" + result);
 
-            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.connect();
             code = connection.getResponseCode(); // show code result :)
@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         final Status status = Status.fromInteger(code);
 
         runOnUiThread(() -> {
-            de.imvlandau.imv_scanner.ScanResultDialog dialog = new de.imvlandau.imv_scanner.ScanResultDialog(this, status);
+            de.imvlandau.imv_scanner.ScanResultDialog dialog = new de.imvlandau.imv_scanner.ScanResultDialog(this, status, result);
             dialog.setOnDismissListener(d -> mCodeScanner.startPreview());
             dialog.show();
         });

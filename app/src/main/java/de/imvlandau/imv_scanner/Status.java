@@ -1,13 +1,24 @@
 package de.imvlandau.imv_scanner;
 
-public enum Status {
-    ACCEPTED, ALREADY_HERE, NOT_REGISTERED, BAD_URL;
+import androidx.annotation.NonNull;
 
+public enum Status {
+    ACCEPTED("akzeptiert"),
+    ALREADY_HERE("nchon da"),
+    NOT_REGISTERED("nicht registriert"),
+    WRONG_URL("falsch URL");
+
+    Status(String staringValue) {
+        this.stringValue = staringValue;
+    }
+
+    private final String stringValue;
 
     public static Status fromInteger(int value) {
         switch (value) {
             case -1:
-                return Status.BAD_URL;
+            case 405:
+                return Status.WRONG_URL;
             case 202:
                 return Status.ACCEPTED;
             case 226:
@@ -15,5 +26,11 @@ public enum Status {
             default:
                 return NOT_REGISTERED;
         }
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return this.stringValue;
     }
 }

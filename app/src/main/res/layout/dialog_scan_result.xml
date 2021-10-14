@@ -19,7 +19,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:text="Just an Example user"
         android:textColor="@color/design_default_color_primary"
         android:textSize="22sp"
         android:textStyle="bold"

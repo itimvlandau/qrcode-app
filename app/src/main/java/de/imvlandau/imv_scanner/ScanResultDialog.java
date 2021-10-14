@@ -12,27 +12,29 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDialog;
 import androidx.appcompat.content.res.AppCompatResources;
 
-import com.google.zxing.Result;
-
 public class ScanResultDialog extends AppCompatDialog {
 
-    ImageView imageView ;
-    public ScanResultDialog(@NonNull Context context, @NonNull Status result) {
+    ImageView imageView;
+    public ScanResultDialog(@NonNull Context context, @NonNull Status result, String code) {
         super(context, resolveDialogTheme(context));
         setTitle("Scan Result");
         setContentView(R.layout.dialog_scan_result);
-        ((TextView) findViewById(R.id.text_view)).setText(result.toString());
+        TextView textView = findViewById(R.id.text_view);
         imageView = findViewById(R.id.image_view);
-        switch (result){
+        switch (result) {
             case ACCEPTED:
-                imageView.setImageDrawable(AppCompatResources.getDrawable(getContext(),R.drawable.ic_baseline_check_circle_24));
+                imageView.setImageDrawable(AppCompatResources.getDrawable(getContext(), R.drawable.ic_baseline_check_circle_24));
                 break;
             case ALREADY_HERE:
             case NOT_REGISTERED:
-                imageView.setImageDrawable(AppCompatResources.getDrawable(getContext(),R.drawable.ic_baseline_pan_tool_24));
-            case BAD_URL:
-                imageView.setImageDrawable(AppCompatResources.getDrawable(getContext(),R.drawable.ic_round_cancel_24));
+                imageView.setImageDrawable(AppCompatResources.getDrawable(getContext(), R.drawable.ic_baseline_pan_tool_24));
+                textView.setText(code + " ist ");
+                break;
+            case WRONG_URL:
+                imageView.setImageDrawable(AppCompatResources.getDrawable(getContext(), R.drawable.ic_round_cancel_24));
+                break;
         }
+        textView.append(result.toString());
         ((Button) findViewById(R.id.ok_button)).setOnClickListener(v -> dismiss());
 
     }
